@@ -2,6 +2,7 @@ package com.zenith.module.impl;
 
 import com.github.rfresh2.EventConsumer;
 import com.zenith.event.client.ClientBotTick;
+import com.zenith.feature.player.ClickTarget;
 import com.zenith.feature.player.Input;
 import com.zenith.feature.player.InputRequest;
 import com.zenith.module.api.Module;
@@ -45,6 +46,13 @@ public class Click extends Module {
                         .pitch(CONFIG.client.extra.click.rotationPitch);
                 }
                 in.sneaking(CONFIG.client.extra.click.holdSneak);
+                var clickTarget = switch (CONFIG.client.extra.click.holdClickTarget) {
+                    case ANY -> ClickTarget.Any.INSTANCE;
+                    case NONE -> ClickTarget.None.INSTANCE;
+                    case ENTITY -> ClickTarget.AnyEntity.INSTANCE;
+                    case BLOCK -> ClickTarget.AnyBlock.INSTANCE;
+                };
+                in.clickTarget(clickTarget);
                 INPUTS.submit(req
                     .owner(this)
                     .input(in.build())
@@ -74,6 +82,13 @@ public class Click extends Module {
                         .pitch(CONFIG.client.extra.click.rotationPitch);
                 }
                 in.sneaking(CONFIG.client.extra.click.holdSneak);
+                var clickTarget = switch (CONFIG.client.extra.click.holdClickTarget) {
+                    case ANY -> ClickTarget.Any.INSTANCE;
+                    case NONE -> ClickTarget.None.INSTANCE;
+                    case ENTITY -> ClickTarget.AnyEntity.INSTANCE;
+                    case BLOCK -> ClickTarget.AnyBlock.INSTANCE;
+                };
+                in.clickTarget(clickTarget);
                 INPUTS.submit(req
                     .input(in.build())
                     .build());

@@ -164,15 +164,16 @@ public class ClientSession extends TcpClientSession {
             CLIENT_LOG.info("Disconnecting from server...");
             CLIENT_LOG.trace("Disconnect reason: {}", reason);
             // reason can be malformed for MC parser the logger uses
+            var connections = Proxy.getInstance().getActiveConnections().getArray();
+            for (int i = 0; i < connections.length; i++) {
+                var connection = connections[i];
+                connection.disconnect(reason);
+            }
         } catch (final Exception e) {
             // fall through
+        } finally {
+            Proxy.getInstance().getCurrentPlayer().set(null);
         }
-        var connections = Proxy.getInstance().getActiveConnections().getArray();
-        for (int i = 0; i < connections.length; i++) {
-            var connection = connections[i];
-            connection.disconnect(reason);
-        }
-        Proxy.getInstance().getCurrentPlayer().set(null);
     }
 
     @Override

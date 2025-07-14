@@ -8,6 +8,7 @@ import com.zenith.command.api.CommandCategory;
 import com.zenith.command.api.CommandContext;
 import com.zenith.command.api.CommandUsage;
 import com.zenith.discord.Embed;
+import com.zenith.feature.player.World;
 import com.zenith.mc.block.Block;
 import com.zenith.mc.block.BlockPos;
 import com.zenith.mc.entity.EntityData;
@@ -50,6 +51,7 @@ public class PathfinderCommand extends Command {
             .usageLines(
                 "goto <x> <z>",
                 "goto <x> <y> <z>",
+                "goto <waypointId>",
                 "stop",
                 "follow",
                 "follow <playerName>",
@@ -57,6 +59,7 @@ public class PathfinderCommand extends Command {
                 "getTo <block>",
                 "mine <block>",
                 "click <left/right> <x> <y> <z>",
+                "click <left/right> <waypointId>",
                 "click <left/right> entity <type>",
                 "break <x> <y> <z>",
                 "pickup",
@@ -115,6 +118,44 @@ public class PathfinderCommand extends Command {
                             ? "||[" + x + ", " + y + ", " + z + "]||"
                             : "Coords disabled")
                         .primaryColor();
+                }))
+                .then(argument("waypoint", wordWithChars()).executes(c -> {
+                    String id = getString(c, "waypoint");
+                    var wpOptional = CONFIG.client.extra.waypoints.waypoints.stream()
+                        .filter(w -> w.id().equalsIgnoreCase(id))
+                        .findFirst();
+                    if (wpOptional.isEmpty()) {
+                        c.getSource().getEmbed()
+                            .title("Waypoint Not Found");
+                        return ERROR;
+                    }
+                    var wp = wpOptional.get();
+                    if (wp.dimensionData() != World.getCurrentDimension()) {
+                        c.getSource().getEmbed()
+                            .title("Waypoint Dimension Mismatch")
+                            .addField("Waypoint Dimension", wp.dimension())
+                            .addField("Current Dimension", World.getCurrentDimension().name());
+                        return ERROR;
+                    }
+                    int x = wp.x();
+                    int y = wp.y();
+                    int z = wp.z();
+                    BARITONE.pathTo(x, y, z)
+                        .addExecutedListener(f -> {
+                            c.getSource().getSource().logEmbed(c.getSource(), Embed.builder()
+                                .title("Pathing Completed!")
+                                .addField("Pos", CONFIG.discord.reportCoords
+                                    ? "||[" + x + ", " + y + ", " + z + "]||"
+                                    : "Coords disabled")
+                                .primaryColor());
+                        });
+                    c.getSource().getEmbed()
+                        .title("Pathing")
+                        .addField("Goal", CONFIG.discord.reportCoords
+                            ? "||[" + x + ", " + y + ", " + z + "]||"
+                            : "Coords disabled")
+                        .primaryColor();
+                    return OK;
                 })))
             .then(literal("stop").executes(c -> {
                 BARITONE.stop();
@@ -173,25 +214,25 @@ public class PathfinderCommand extends Command {
                         .title("Picking up all items")
                         .primaryColor();
                 }))
-                .then(argument("item", item()).executes(c -> {
-                    var item = getItem(c, "item");
-                    if (item == null) {
-                        c.getSource().getEmbed()
-                            .title("Item Not found");
-                        return ERROR;
-                    }
-                    BARITONE.pickup(item)
-                        .addExecutedListener(f -> {
-                            c.getSource().getSource().logEmbed(c.getSource(), Embed.builder()
-                                .title("Item Picked Up!")
-                                .primaryColor());
-                        });
+            .then(argument("item", item()).executes(c -> {
+                var item = getItem(c, "item");
+                if (item == null) {
                     c.getSource().getEmbed()
-                        .title("Picking up item")
-                        .addField("Item", escape(item.name()))
-                        .primaryColor();
-                    return OK;
-                }))
+                        .title("Item Not found");
+                    return ERROR;
+                }
+                BARITONE.pickup(item)
+                    .addExecutedListener(f -> {
+                        c.getSource().getSource().logEmbed(c.getSource(), Embed.builder()
+                            .title("Item Picked Up!")
+                            .primaryColor());
+                    });
+                c.getSource().getEmbed()
+                    .title("Picking up item")
+                    .addField("Item", escape(item.name()))
+                    .primaryColor();
+                return OK;
+            }))
             .then(literal("thisway").then(argument("dist", integer()).executes(c -> {
                 int dist = getInteger(c, "dist");
                 BARITONE.thisWay(dist)
@@ -290,19 +331,57 @@ public class PathfinderCommand extends Command {
                                         .title("Entity Left Clicked!")
                                         .addField("Target", entityOptional.get().getEntityType()
                                             + (CONFIG.discord.reportCoords
-                                                ? " ||[" + entityOptional.get().position() + "]||"
-                                                : ""))
+                                            ? " ||[" + entityOptional.get().position() + "]||"
+                                            : ""))
                                         .primaryColor());
                                 });
                             c.getSource().getEmbed()
                                 .title("Pathing")
                                 .addField("Left Click", entityOptional.get().getEntityType()
                                     + (CONFIG.discord.reportCoords
-                                        ? " ||[" + entityOptional.get().position() + "]||"
-                                        : ""))
+                                    ? " ||[" + entityOptional.get().position() + "]||"
+                                    : ""))
                                 .primaryColor();
                             return OK;
-                        }))))
+                        })))
+                    .then(argument("waypoint", wordWithChars()).executes(c -> {
+                        String id = getString(c, "waypoint");
+                        var wpOptional = CONFIG.client.extra.waypoints.waypoints.stream()
+                            .filter(w -> w.id().equalsIgnoreCase(id))
+                            .findFirst();
+                        if (wpOptional.isEmpty()) {
+                            c.getSource().getEmbed()
+                                .title("Waypoint Not Found");
+                            return ERROR;
+                        }
+                        var wp = wpOptional.get();
+                        if (wp.dimensionData() != World.getCurrentDimension()) {
+                            c.getSource().getEmbed()
+                                .title("Waypoint Dimension Mismatch")
+                                .addField("Waypoint Dimension", wp.dimension())
+                                .addField("Current Dimension", World.getCurrentDimension().name());
+                            return ERROR;
+                        }
+                        int x = wp.x();
+                        int y = wp.y();
+                        int z = wp.z();
+                        BARITONE.leftClickBlock(x, y, z)
+                            .addExecutedListener(f -> {
+                                c.getSource().getSource().logEmbed(c.getSource(), Embed.builder()
+                                    .title("Pathing Completed!")
+                                    .addField("Pos", CONFIG.discord.reportCoords
+                                        ? "||[" + x + ", " + y + ", " + z + "]||"
+                                        : "Coords disabled")
+                                    .primaryColor());
+                            });
+                        c.getSource().getEmbed()
+                            .title("Pathing")
+                            .addField("Goal", CONFIG.discord.reportCoords
+                                ? "||[" + x + ", " + y + ", " + z + "]||"
+                                : "Coords disabled")
+                            .primaryColor();
+                        return OK;
+                    })))
                 .then(literal("right")
                     .then(argument("pos", blockPos()).executes(c -> {
                         var pos = getBlockPos(c, "pos");
@@ -355,19 +434,57 @@ public class PathfinderCommand extends Command {
                                         .title("Entity Right Clicked!")
                                         .addField("Target", entityOptional.get().getEntityType()
                                             + (CONFIG.discord.reportCoords
-                                                ? " ||[" + entityOptional.get().position() + "]||"
-                                                : ""))
+                                            ? " ||[" + entityOptional.get().position() + "]||"
+                                            : ""))
                                         .primaryColor());
                                 });
                             c.getSource().getEmbed()
                                 .title("Pathing")
                                 .addField("Right Click", entityOptional.get().getEntityType()
                                     + (CONFIG.discord.reportCoords
-                                        ? " ||[" + entityOptional.get().position() + "]||"
-                                        : ""))
+                                    ? " ||[" + entityOptional.get().position() + "]||"
+                                    : ""))
                                 .primaryColor();
                             return OK;
-                        })))))
+                        })))
+                    .then(argument("waypoint", wordWithChars()).executes(c -> {
+                        String id = getString(c, "waypoint");
+                        var wpOptional = CONFIG.client.extra.waypoints.waypoints.stream()
+                            .filter(w -> w.id().equalsIgnoreCase(id))
+                            .findFirst();
+                        if (wpOptional.isEmpty()) {
+                            c.getSource().getEmbed()
+                                .title("Waypoint Not Found");
+                            return ERROR;
+                        }
+                        var wp = wpOptional.get();
+                        if (wp.dimensionData() != World.getCurrentDimension()) {
+                            c.getSource().getEmbed()
+                                .title("Waypoint Dimension Mismatch")
+                                .addField("Waypoint Dimension", wp.dimension())
+                                .addField("Current Dimension", World.getCurrentDimension().name());
+                            return ERROR;
+                        }
+                        int x = wp.x();
+                        int y = wp.y();
+                        int z = wp.z();
+                        BARITONE.rightClickBlock(x, y, z)
+                            .addExecutedListener(f -> {
+                                c.getSource().getSource().logEmbed(c.getSource(), Embed.builder()
+                                    .title("Pathing Completed!")
+                                    .addField("Pos", CONFIG.discord.reportCoords
+                                        ? "||[" + x + ", " + y + ", " + z + "]||"
+                                        : "Coords disabled")
+                                    .primaryColor());
+                            });
+                        c.getSource().getEmbed()
+                            .title("Pathing")
+                            .addField("Goal", CONFIG.discord.reportCoords
+                                ? "||[" + x + ", " + y + ", " + z + "]||"
+                                : "Coords disabled")
+                            .primaryColor();
+                        return OK;
+                    }))))
             .then(literal("break").then(argument("pos", blockPos()).executes(c -> {
                 BlockPos pos = getBlockPos(c, "pos");
                 int x = pos.x();

@@ -2060,6 +2060,42 @@
       ]
     },
     {
+      "type": "com.zenith.feature.waypoints.Waypoint",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "int",
+            "int",
+            "int"
+          ]
+        },
+        {
+          "name": "dimension",
+          "parameterTypes": []
+        },
+        {
+          "name": "id",
+          "parameterTypes": []
+        },
+        {
+          "name": "x",
+          "parameterTypes": []
+        },
+        {
+          "name": "y",
+          "parameterTypes": []
+        },
+        {
+          "name": "z",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "com.zenith.feature.whitelist.PlayerEntry",
       "allDeclaredFields": true,
       "methods": [
@@ -2469,7 +2505,15 @@
       ]
     },
     {
+      "type": "com.zenith.util.config.Config$Client$Extra$Click$HoldClickTarget",
+      "allDeclaredFields": true
+    },
+    {
       "type": "com.zenith.util.config.Config$Client$Extra$Click$HoldRightClickMode",
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.zenith.util.config.Config$Client$Extra$Click$HoldRightClickTarget",
       "allDeclaredFields": true
     },
     {
@@ -2695,6 +2739,16 @@
     },
     {
       "type": "com.zenith.util.config.Config$Client$Extra$Wander",
+      "allDeclaredFields": true,
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.zenith.util.config.Config$Client$Extra$Waypoints",
       "allDeclaredFields": true,
       "methods": [
         {

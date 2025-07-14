@@ -326,18 +326,26 @@ public class NotificationEventListener {
         var clientProtocolVersion = client.getProtocolVersion();
         var playerProtocolVersion = event.session().getProtocolVersion();
         if (!clientProtocolVersion.equalTo(playerProtocolVersion)) {
+            var desc = """
+                 **Client MC Version**: %s
+                 **ZenithProxy Client MC Version**: %s
+                 
+                 It is recommended to use the same MC version as the ZenithProxy client.
+                 
+                 Otherwise you may experience issues with 2b2t's anti-cheat, which changes its checks based on client MC version.
+                 
+                 Or configure ZenithProxy's client ViaVersion (reconnect after changing):
+                 `via zenithToServer version %s`
+                 """.formatted(playerProtocolVersion.getName(), clientProtocolVersion.getName(), playerProtocolVersion.getName());
+            if (CONFIG.client.viaversion.disableOn2b2t) {
+                desc += "`via zenithToServer disableOn2b2t off`\n";
+            }
+            if (!CONFIG.client.viaversion.enabled) {
+                desc += "`via zenithToServer on`\n";
+            }
             var embed = Embed.builder()
                 .title("MC Version Mismatch")
-                .description("""
-                     **Client MC Version**: %s
-                     **ZenithProxy Client MC Version**: %s
-                     
-                     It is recommended to use the same MC version as the ZenithProxy client.
-                     
-                     Otherwise you may experience issues with 2b2t's anti-cheat, which changes its checks based on client MC version.
-                     
-                     Or configure ZenithProxy's client ViaVersion: `via zenithToServer version <version>`
-                     """.formatted(playerProtocolVersion.getName(), clientProtocolVersion.getName()))
+                .description(desc)
                 .errorColor();
             sendEmbedMessage(embed);
         }

@@ -111,6 +111,7 @@ public class CommandManager {
         new UnsupportedCommand(),
         new ViaVersionCommand(),
         new VisualRangeCommand(),
+        new WaypointsCommand(),
         new WhitelistCommand()
     );
     private final CommandDispatcher<CommandContext> dispatcher;
